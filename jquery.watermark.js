@@ -66,7 +66,7 @@
                 $elem.removeAttr('placeholder');
 
             watermark_container.css({
-                display: 'inline-block',
+                display: 'block',
                 position: 'relative'
             });
 
