@@ -122,29 +122,64 @@
             watermark_label.click(function () {
                 $($(this).data('jq_watermark_element')).trigger('click').trigger('focus');
             }
-);
+            );
 
             $elem.before(watermark_label)
-.bind('focus.jq_watermark', function () {
-    if (!$.watermarker.checkVal($(this).val(), watermark_label))
-        watermark_label.stop().fadeTo(options.animDuration, options.minOpacity);
-})
-.bind('blur.jq_watermark change.jq_watermark', function () {
-    if (!$.watermarker.checkVal($(this).val(), watermark_label))
-        watermark_label.stop().fadeTo(options.animDuration, 1);
-})
-.bind('keydown.jq_watermark, paste.jq_watermark', function (e) {
-    $(watermark_label).hide();
-})
-.bind('keyup.jq_watermark', function (e) {
-    $.watermarker.checkVal($(this).val(), watermark_label);
-});
+            .bind('focus.jq_watermark', function () {
+                if (!$.watermarker.checkVal($(this).val(), watermark_label))
+                    watermark_label.stop().fadeTo(options.animDuration, options.minOpacity);
+            })
+            .bind('blur.jq_watermark change.jq_watermark', function () {
+                if (!$.watermarker.checkVal($(this).val(), watermark_label))
+                    watermark_label.stop().fadeTo(options.animDuration, 1);
+            })
+            .on('input.jq_watermark', function (e) {
+                $(watermark_label).hide();
+            })
+            .bind('keyup.jq_watermark', function (e) {
+                $.watermarker.checkVal($(this).val(), watermark_label);
+            });
         });
 
         return this;
     };
+    
+    $.fn.listenForChange = function(options) {
+        settings = $.extend({
+            interval: 200 // in microseconds
+        }, options);
 
-    $(function () {
-        $('.jq_watermark').watermark();
-    })
+        var jquery_object = this;
+        var current_focus = null;
+
+        jquery_object.focus( function() {
+            current_focus = this;
+        }).blur( function() {
+            current_focus = null;
+        });
+
+        setInterval(function() {
+            // allow
+            jquery_object.each(function() {
+                // set data cache on element to input value if not yet set
+                if ($(this).data('change_listener') == undefined) {
+                    $(this).data('change_listener', $(this).val());
+                    return;
+                }
+                // return if the value matches the cache
+                if ($(this).data('change_listener') == $(this).val()) {
+                    return;
+                }
+                // ignore if element is in focus (since change event will fire on blur)
+                if (this == current_focus) {
+                    return;
+                }
+                // if we make it here, manually fire the change event and set the new value
+                $(this).trigger('change');
+                $(this).data('change_listener', $(this).val());
+            });
+        }, settings.interval);
+        return this;
+    };
+
 })(jQuery);
